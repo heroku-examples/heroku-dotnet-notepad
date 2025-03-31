@@ -9,36 +9,28 @@ var builder = WebApplication.CreateBuilder(args);
 // Load environment variables from .env file if it exists
 Env.Load();
 
+var redisUrl = Environment.GetEnvironmentVariable("REDIS_URL");
 // Configure Redis for SignalR
-var redisConnection = Environment.GetEnvironmentVariable("REDIS_URL");
-if (!string.IsNullOrEmpty(redisConnection))
+if (!string.IsNullOrEmpty(redisUrl))
 {
-    // Parse Heroku Redis URL format: redis://h:password@host:port
-    var uri = new Uri(redisConnection);
-    var host = uri.Host;
-    var redisPort = uri.Port;
+    var uri = new Uri(redisUrl);
     var userInfoParts = uri.UserInfo.Split(':');
     if (userInfoParts.Length != 2)
-        throw new InvalidOperationException("REDIS_URL is not in the expected format 'redis://user:password@host:port'");
-    var password = Uri.UnescapeDataString(userInfoParts[1]);
-    var redisConfig = new ConfigurationOptions
     {
-        EndPoints = { { host, redisPort } },
-        Password = password,
-        AbortOnConnectFail = false,
-        ConnectRetry = 5,
-        SyncTimeout = 5000,
-        KeepAlive = 60,
-        ConnectTimeout = 5000,
+        throw new InvalidOperationException("REDIS_URL is not in the expected format ('redis://user:password@host:port')");
+    }
+
+    var configurationOptions = new ConfigurationOptions
+    {
+        EndPoints = { { uri.Host, uri.Port } },
+        Password = userInfoParts[1],
         Ssl = true,
-        SslProtocols = System.Security.Authentication.SslProtocols.Tls12,
-        AllowAdmin = true,
-        ConfigCheckSeconds = 0
     };
-    redisConfig.CertificateValidation += (sender, cert, chain, errors) => true;
+    configurationOptions.CertificateValidation += (sender, cert, chain, errors) => true;
+
     builder.Services.AddSignalR().AddStackExchangeRedis(options =>
     {
-        options.Configuration = redisConfig;
+        options.Configuration = configurationOptions;
         options.Configuration.ChannelPrefix = RedisChannel.Literal("NotepadApp_");
     });
 }
