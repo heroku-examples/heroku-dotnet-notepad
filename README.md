@@ -43,3 +43,9 @@ The application should be functional at this point. To scale horizontally and st
 heroku addons:create heroku-postgresql:essential-0 --wait
 heroku addons:create heroku-redis:mini --wait
 ```
+
+SignalR requires ["sticky sessions"](https://learn.microsoft.com/en-us/aspnet/core/signalr/scale?view=aspnetcore-9.0#sticky-sessions) when running on multiple servers, so make sure to also enable the [Session Affinity](https://devcenter.heroku.com/articles/session-affinity#enable-session-affinity) feature when scaling horizontally:
+
+```
+heroku features:enable http-session-affinity
+```
