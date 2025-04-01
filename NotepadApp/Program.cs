@@ -97,6 +97,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
+app.UseHttpsRedirection();
+
 // Additional middleware
 app.UseStaticFiles();
 app.UseRouting();
