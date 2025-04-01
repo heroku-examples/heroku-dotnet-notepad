@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using NotepadApp.Data;
 using StackExchange.Redis;
 using DotNetEnv;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -65,6 +66,16 @@ else
 }
 
 builder.Services.AddRazorPages();
+var isHeroku = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DYNO"));
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    if (isHeroku)
+    {
+        options.KnownNetworks.Clear();
+        options.KnownProxies.Clear();
+    }
+});
 
 var app = builder.Build();
 
