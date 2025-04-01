@@ -42,7 +42,8 @@ else
 
 // Configure PostgreSQL
 var databaseUrl = Environment.GetEnvironmentVariable("DATABASE_URL");
-if (!string.IsNullOrEmpty(databaseUrl)) {
+if (!string.IsNullOrEmpty(databaseUrl))
+{
 
     // Parse Heroku PostgreSQL URL format: postgres://username:password@host:port/database
     var uri = new Uri(databaseUrl);
@@ -54,7 +55,9 @@ if (!string.IsNullOrEmpty(databaseUrl)) {
     var password = credentials[1];
     var connectionString = $"Host={host};Port={dbPort};Database={database};Username={username};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
     builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
-} else {
+}
+else
+{
     Console.WriteLine("Warning: DATABASE_URL not found, falling back to SQLite.");
     var fallbackDbPath = Path.Combine(AppContext.BaseDirectory, "local.db");
     var sqliteConnection = $"Data Source={fallbackDbPath}";
