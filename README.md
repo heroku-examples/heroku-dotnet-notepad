@@ -37,7 +37,13 @@ heroku create
 git push heroku main
 ```
 
-The application should be functional at this point. To scale horizontally and store notes you must attach Heroku Postgres and Heroku Key-Value Store by running the following commands:
+The application should be functional at this point. Visit it at the URL shown in the logs to confirm. As a shortcut, you can also open the website using the CLI:
+
+```
+heroku open
+```
+
+To scale horizontally and store notes you must attach Heroku Postgres and Heroku Key-Value Store by running the following commands:
 
 ```
 heroku addons:create heroku-postgresql:essential-0 --wait
