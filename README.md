@@ -23,7 +23,7 @@ heroku config --shell > .env
 
 ## Deploy
 
-You can deploy this applicaiton without Postgres and Redis configured and it will use an in-memory service for SignalR and SQLite for storage. Click the Deploy to Heroku button or follow the commands below. 
+You can deploy this application without Postgres and Redis configured and it will use an in-memory service for SignalR and SQLite for storage. Click the Deploy to Heroku button or follow the commands below. 
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://www.heroku.com/deploy)
 
