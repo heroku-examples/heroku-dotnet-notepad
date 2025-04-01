@@ -1,16 +1,16 @@
 {
-    "name": "Realtime Sticky Notes with SignalR and Heroku",
-    "description": "This is a real-time, multi-user sticky notes application built with SignalR and deployed on Heroku.",
-    "repository": "https://github.com/heroku-examples/heroku-dotnet-notepad",
-    "keywords": [
-        "dotnet",
-        "blazor",
-        "aspnetcore"
-    ],
-    "formation": {
-        "web": {
-            "quantity": 1,
-            "size": "standard-1x"
-        }
+  "name": "Realtime Sticky Notes with SignalR and Heroku",
+  "description": "This is a real-time, multi-user sticky notes application built with SignalR and deployed on Heroku.",
+  "repository": "https://github.com/heroku-examples/heroku-dotnet-notepad",
+  "keywords": [
+    "dotnet",
+    "blazor",
+    "aspnetcore"
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "standard-1x"
     }
+  }
 }
