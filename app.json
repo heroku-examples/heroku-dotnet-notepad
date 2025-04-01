@@ -8,9 +8,9 @@
         "aspnetcore"
     ],
     "formation": {
-      "web" : {
-        "quantity": 1,
-        "size": "standard-1x"
-      }
+        "web": {
+            "quantity": 1,
+            "size": "standard-1x"
+        }
     }
 }
