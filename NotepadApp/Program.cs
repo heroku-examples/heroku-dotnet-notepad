@@ -96,13 +96,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Handle Heroku PORT environment variable
-var port = Environment.GetEnvironmentVariable("PORT");
-if (!string.IsNullOrEmpty(port))
-{
-    app.Urls.Add($"http://+:{port}");
-}
-
 // Only force HTTPS in production
 if (!app.Environment.IsDevelopment())
 {
