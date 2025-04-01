@@ -8,7 +8,7 @@ This app lets users create, edit, and move sticky notes collaboratively in real 
 
 ## Local
 
-You can run this application locallly without Postgres and Redis configured and it will use an in-memory service for SignalR and SQLite for storage. 
+You can run this application locally without Postgres and Redis configured and it will use an in-memory service for SignalR and SQLite for storage. 
 
 ```
 cd NotepadApp
