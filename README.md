@@ -76,3 +76,17 @@ By default, SignalR requires [Sticky Sessions](https://learn.microsoft.com/en-us
 ```
 heroku features:enable http-session-affinity
 ```
+
+Alternatively, you can configure clients to only use WebSockets and skip transport negotiation, by updating the SignalR connection settings [in `Index.cshtml`](/NotepadApp/Pages/Index.cshtml):
+
+```javascript
+async function initializeSignalR() {
+    connection = new signalR.HubConnectionBuilder()
+        .withUrl("/noteHub", {
+            skipNegotiation: true,
+            transport: signalR.HttpTransportType.WebSockets
+        })
+        .withAutomaticReconnect()
+        .build();
+    // ...
+```
