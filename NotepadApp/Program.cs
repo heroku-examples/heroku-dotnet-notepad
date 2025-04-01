@@ -87,8 +87,6 @@ if (!string.IsNullOrEmpty(port))
 else
 {
     // In development, use both HTTP and HTTPS
-    app.Urls.Add("http://localhost:5181");
-    app.Urls.Add("https://localhost:7044");
     app.UseHttpsRedirection();
 }
 
