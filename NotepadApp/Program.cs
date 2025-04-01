@@ -66,11 +66,6 @@ else
 
 builder.Services.AddRazorPages();
 
-builder.Services.AddHttpsRedirection(options =>
-{
-    options.HttpsPort = 7044;
-});
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
