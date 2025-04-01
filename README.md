@@ -43,6 +43,7 @@ The application should be functional at this point. Visit it at the URL shown in
 heroku open
 ```
 
+### Scale 
 To scale horizontally and store notes you must attach Heroku Postgres and Heroku Key-Value Store by running the following commands:
 
 ```
