@@ -96,16 +96,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-// Only force HTTPS in production
-if (!app.Environment.IsDevelopment())
-{
-    app.Use(async (context, next) =>
-    {
-        context.Request.Scheme = "https";
-        await next();
-    });
-}
-
 // Additional middleware
 app.UseStaticFiles();
 app.UseRouting();
