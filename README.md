@@ -1,4 +1,4 @@
-# Realtime Sticky Notes with SignalR and Heroku
+# Real-time Sticky Notes with SignalR and Heroku
 
 This is a real-time, multi-user sticky notes application built with [SignalR](https://dotnet.microsoft.com/en-us/apps/aspnet/signalr) and deployed on Heroku. SignalR enables seamless, bidirectional communication between clients and the server, making it perfect for collaborative experiences. To support horizontal scaling, the app leverages Redis via the [Heroku Key-Value Store](https://devcenter.heroku.com/articles/heroku-redis) add-on, alongside [Heroku Postgres](https://www.heroku.com/postgres) for persistent data storage. 
 
@@ -6,7 +6,7 @@ This app lets users create, edit, and move sticky notes collaboratively in real 
 
 <img src="Images/NotepadApp.png"/>
 
-## Local
+## Running Locally
 
 You can run this application locally without Postgres and Redis configured and it will use an in-memory service for SignalR and SQLite for storage. 
 
@@ -21,7 +21,7 @@ If you want to attach Heroku Postgres and Heroku Key-Value Store and use them lo
 heroku config --shell > .env
 ```
 
-## Deploy
+## Deploying to Heroku
 
 You can deploy this application without Postgres and Redis configured and it will use an in-memory service for SignalR and SQLite for storage. Click the Deploy to Heroku button or follow the commands below. 
 
@@ -42,7 +42,7 @@ As a shortcut, you can also open the website using the CLI:
 heroku open
 ```
 
-### Provision add-ons
+### Provisioning add-ons
 
 If you want to use Heroku Postgres and Heroku Key-Value Store, run the following commands:
 
@@ -53,7 +53,7 @@ heroku addons:create heroku-redis:mini --wait
 
 Your app will automatically be redeployed and configured to use add-ons when provisioned.
 
-### Scale 
+### Scaling
 
 To scale horizontally and persist notes across deployments, you must attach Heroku Postgres and Heroku Key-Value Store [as described above](#provision-add-ons).
 
