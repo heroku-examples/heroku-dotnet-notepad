@@ -15,12 +15,9 @@ cd NotepadApp
 dotnet run
 ```
 
-If you want to attach Heroku Postgres and Heroku Key-Value Store run the following commands and restart the application.
+If you want to attach Heroku Postgres and Heroku Key-Value Store and use them locally during develpment, export the Heroku app's config vars to a `.env` file after creating the app and [provisioning the add-ons](#provision-add-ons):
 
 ```
-heroku create
-heroku addons:create heroku-postgresql:essential-0 --wait
-heroku addons:create heroku-redis:mini --wait
 heroku config --shell > .env
 ```
 
@@ -37,19 +34,28 @@ heroku create
 git push heroku main
 ```
 
-The application should be functional at this point. Visit it at the URL shown in the logs to confirm. As a shortcut, you can also open the website using the CLI:
+The application should be functional at this point. Visit it at the URL shown in the deploy log to confirm.
+
+As a shortcut, you can also open the website using the CLI:
 
 ```
 heroku open
 ```
 
-### Scale 
-To scale horizontally and store notes you must attach Heroku Postgres and Heroku Key-Value Store by running the following commands:
+### Provision add-ons
+
+If you want to use Heroku Postgres and Heroku Key-Value Store, run the following commands:
 
 ```
 heroku addons:create heroku-postgresql:essential-0 --wait
 heroku addons:create heroku-redis:mini --wait
 ```
+
+Your app will automatically be redeployed and configured to use add-ons when provisioned.
+
+### Scale 
+
+To scale horizontally and persist notes across deployments, you must attach Heroku Postgres and Heroku Key-Value Store [as described above](#provision-add-ons).
 
 SignalR requires ["sticky sessions"](https://learn.microsoft.com/en-us/aspnet/core/signalr/scale?view=aspnetcore-9.0#sticky-sessions) when running on multiple servers, so make sure to also enable the [Session Affinity](https://devcenter.heroku.com/articles/session-affinity#enable-session-affinity) feature when scaling horizontally:
 
