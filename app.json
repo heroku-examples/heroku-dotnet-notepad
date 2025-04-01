@@ -7,11 +7,6 @@
         "blazor",
         "aspnetcore"
     ],
-    "buildpacks": [
-        {
-            "url": "heroku/dotnet"
-        }
-    ],
     "formation": {
       "web" : {
         "quantity": 1,
