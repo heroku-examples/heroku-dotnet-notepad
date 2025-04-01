@@ -57,6 +57,18 @@ Your app will automatically be redeployed and configured to use add-ons when pro
 
 To scale horizontally and persist notes across deployments, you must attach Heroku Postgres and Heroku Key-Value Store [as described above](#provision-add-ons).
 
+Scale the app to run on two dynos with the following command:
+
+```
+heroku ps:scale web=2
+```
+
+You can check the deployment status by listing all dynos for your app:
+
+```
+heroku ps
+```
+
 SignalR requires ["sticky sessions"](https://learn.microsoft.com/en-us/aspnet/core/signalr/scale?view=aspnetcore-9.0#sticky-sessions) when running on multiple servers, so make sure to also enable the [Session Affinity](https://devcenter.heroku.com/articles/session-affinity#enable-session-affinity) feature when scaling horizontally:
 
 ```
