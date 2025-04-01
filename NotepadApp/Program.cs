@@ -76,6 +76,15 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
         options.KnownProxies.Clear();
     }
 });
+builder.Services.AddHttpsRedirection(options =>
+{
+    if (isHeroku)
+    {
+        options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
+        options.HttpsPort = 443;
+    }
+    ;
+});
 
 var app = builder.Build();
 
@@ -92,11 +101,6 @@ var port = Environment.GetEnvironmentVariable("PORT");
 if (!string.IsNullOrEmpty(port))
 {
     app.Urls.Add($"http://+:{port}");
-}
-else
-{
-    // In development, use both HTTP and HTTPS
-    app.UseHttpsRedirection();
 }
 
 // Only force HTTPS in production
