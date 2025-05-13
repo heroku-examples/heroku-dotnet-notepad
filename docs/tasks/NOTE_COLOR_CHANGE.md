@@ -7,12 +7,12 @@ Allow users to change the color of a note (between red, yellow, and green) by cl
     -   Determine the visual representation of the color options (e.g., small colored circles, dropdown).
     -   Modify the `addNoteToUI` JavaScript function in `NotepadApp/Pages/Index.cshtml` to include these UI elements in newly created and existing notes.
     -   Ensure the UI elements are styled appropriately and are clearly part of the note header.
-- [ ] **Task 2: Implement Frontend Logic for Color Selection**
+- [x] **Task 2: Implement Frontend Logic for Color Selection**
     -   In `NotepadApp/Pages/Index.cshtml`, add JavaScript event listeners to the new color picker UI elements.
     -   When a color is selected:
         -   Visually update the note's background color on the client-side immediately.
         -   Prepare the note data with the new color.
-        -   Call the existing `updateNoteContent` function (or a new dedicated function if cleaner) to send the update to the server via the `UpdateNote` SignalR hub method.
+        -   A new function `changeNoteColor` was created and called, which then sends the update to the server via the `UpdateNote` SignalR hub method.
 - [ ] **Task 3: Update Note Styling Based on Color**
     -   Modify the CSS in `NotepadApp/Pages/Index.cshtml` (or `site.css` if preferred for organization) to define styles for notes with "red", "yellow", and "green" colors.
     -   Ensure the `addNoteToUI` and `updateNoteInUI` JavaScript functions apply the correct CSS class or inline style based on the `note.color` property.

@@ -133,6 +133,7 @@
             *   `updateNoteContent`: Called on blur/change of editable fields or color change, calls `connection.invoke("UpdateNote", ...)`.
             *   `deleteNote`: Calls `connection.invoke("DeleteNote", noteId)`.
             *   The `addNoteToUI` function now includes a color picker UI (red, yellow, green dots) in the note header, allowing visual selection of note color. CSS classes are used to apply the background color to notes.
+            *   A new `changeNoteColor(noteId, newColor)` function handles the logic for when a color dot is clicked. It updates the note's appearance client-side immediately and invokes the `UpdateNote` SignalR hub method to persist the change.
 *   **Configuration:** Uses the shared layout (`_Layout.cshtml`). Data is primarily managed via client-side JavaScript and SignalR.
 *   **Dependencies:** `NotepadApp.Models` (for `Note` type, though interaction is client-side), SignalR client.
 ---

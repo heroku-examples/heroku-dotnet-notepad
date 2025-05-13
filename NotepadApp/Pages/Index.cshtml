@@ -347,6 +347,9 @@
                 const dot = document.createElement('span');
                 dot.className = 'color-dot ' + color;
                 dot.dataset.color = color;
+                dot.onclick = function() {
+                    changeNoteColor(note.id, this.dataset.color);
+                };
                 colorPicker.appendChild(dot);
             });
             header.appendChild(colorPicker);
@@ -421,7 +424,11 @@
             if (note) {
                 note.content = content;
                 note.updatedAt = new Date();
-                connection.invoke("UpdateNote", note);
+                if (connection) {
+                    connection.invoke("UpdateNote", note).catch(err => console.error("Error invoking UpdateNote for content change:", err));
+                } else {
+                    console.error("SignalR connection not available for content change.");
+                }
             }
         }
 
@@ -468,6 +475,26 @@
 
                     const noteId = parseInt(element.id);
                     connection.invoke("MoveNote", noteId, startX, startY);
+                }
+            }
+        }
+
+        function changeNoteColor(noteId, newColor) {
+            const noteDiv = document.getElementById('note-' + noteId);
+            const note = notes.get(noteId);
+
+            if (noteDiv && note) {
+                // Update UI immediately
+                noteDiv.className = 'note'; // Reset existing color classes
+                noteDiv.classList.add(newColor.toLowerCase());
+
+                // Update local note object and send to server
+                note.color = newColor;
+                note.updatedAt = new Date();
+                if (connection) {
+                    connection.invoke("UpdateNote", note).catch(err => console.error("Error invoking UpdateNote for color change:", err));
+                } else {
+                    console.error("SignalR connection not available for color change.");
                 }
             }
         }
