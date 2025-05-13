@@ -13,9 +13,9 @@ Allow users to change the color of a note (between red, yellow, and green) by cl
         -   Visually update the note's background color on the client-side immediately.
         -   Prepare the note data with the new color.
         -   A new function `changeNoteColor` was created and called, which then sends the update to the server via the `UpdateNote` SignalR hub method.
-- [ ] **Task 3: Update Note Styling Based on Color**
-    -   Modify the CSS in `NotepadApp/Pages/Index.cshtml` (or `site.css` if preferred for organization) to define styles for notes with "red", "yellow", and "green" colors.
-    -   Ensure the `addNoteToUI` and `updateNoteInUI` JavaScript functions apply the correct CSS class or inline style based on the `note.color` property.
+- [x] **Task 3: Update Note Styling Based on Color**
+    -   CSS classes for red, yellow, and green note backgrounds were added in Task 1 (`.note.red`, `.note.green`, `.note.yellow`).
+    -   The `addNoteToUI`, `updateNoteInUI`, and `changeNoteColor` JavaScript functions correctly apply these CSS classes based on the `note.color` property. This task's requirements were completed as part of Tasks 1 & 2.
 - [ ] **Task 4: Verify Server-Side Persistence (Existing Functionality)**
     -   Confirm that the existing `NoteHub.UpdateNote(Note note)` method correctly saves the `Color` property to the database. (Based on `docs/app.md`, the `Note` model already has a `Color` property, and `UpdateNote` should handle general updates.)
     -   Test the full flow: change color, refresh page, verify color persists.
