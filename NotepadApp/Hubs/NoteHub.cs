@@ -26,6 +26,14 @@ namespace NotepadApp.Hubs
             {
                 await Clients.Caller.SendAsync("ReceiveNote", note);
             }
+
+            // Send all existing note connections to the newly connected client
+            var connections = await _context.NoteConnections.ToListAsync();
+            foreach (var connection in connections)
+            {
+                await Clients.Caller.SendAsync("ReceiveNoteConnection", connection);
+            }
+
             await base.OnConnectedAsync();
         }
 
@@ -79,6 +87,62 @@ namespace NotepadApp.Hubs
                 
                 await _context.SaveChangesAsync();
                 await Clients.All.SendAsync("MoveNote", noteId, x, y);
+            }
+        }
+
+        public async Task ConnectNotes(int sourceNoteId, int targetNoteId)
+        {
+            // Prevent connecting a note to itself
+            if (sourceNoteId == targetNoteId)
+            {
+                // Optionally, send an error message back to the caller
+                // await Clients.Caller.SendAsync("ConnectionError", "Cannot connect a note to itself.");
+                return;
+            }
+
+            // Check if connection already exists (either way)
+            var existingConnection = await _context.NoteConnections
+                .FirstOrDefaultAsync(nc => 
+                    (nc.SourceNoteId == sourceNoteId && nc.TargetNoteId == targetNoteId) ||
+                    (nc.SourceNoteId == targetNoteId && nc.TargetNoteId == sourceNoteId));
+
+            if (existingConnection != null)
+            {
+                // Connection already exists, no need to do anything or send an error
+                return;
+            }
+
+            var sourceNoteExists = await _context.Notes.AnyAsync(n => n.Id == sourceNoteId);
+            var targetNoteExists = await _context.Notes.AnyAsync(n => n.Id == targetNoteId);
+
+            if (!sourceNoteExists || !targetNoteExists)
+            {
+                // One or both notes do not exist
+                // await Clients.Caller.SendAsync("ConnectionError", "One or both notes do not exist.");
+                return;
+            }
+
+            var newConnection = new NoteConnection
+            {
+                SourceNoteId = sourceNoteId,
+                TargetNoteId = targetNoteId,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.NoteConnections.Add(newConnection);
+            await _context.SaveChangesAsync();
+
+            await Clients.All.SendAsync("ReceiveNoteConnection", newConnection);
+        }
+
+        public async Task DisconnectNotes(int connectionId)
+        {
+            var connection = await _context.NoteConnections.FindAsync(connectionId);
+            if (connection != null)
+            {
+                _context.NoteConnections.Remove(connection);
+                await _context.SaveChangesAsync();
+                await Clients.All.SendAsync("RemoveNoteConnection", connectionId);
             }
         }
     }

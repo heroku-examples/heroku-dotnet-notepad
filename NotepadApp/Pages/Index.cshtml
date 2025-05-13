@@ -12,13 +12,18 @@
         <a href="/" class="lang-logo">
             <img src="/lang-logo.png">
         </a>
-        <h1>CHANGE Realtime Sticky Notes with SignalR</h1>
+        <h1>Realtime Sticky Notes with SignalR</h1>
         <p>This sample .NET Razor application is deployed to Heroku. It uses SignalR in .NET, leveraging recent HTTP/2 support on Heroku to optimize network traffic. The architecture can be easily scaled using Heroku Dyno scaling and the Heroku Key-Value Store.</p>
     </div>
 </div>
 
 <div class="note-container" id="noteContainer">
-    <button class="add-note-btn" onclick="createNewNote()">+</button>
+    <svg id="connectionsCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0;"></svg>
+    <button class="add-note-btn" onclick="createNewNote('#FFD700')">+</button>
+    <button class="add-note-btn color-btn" style="background-color: #F44336;" onclick="createNewNote('#F44336')">R</button>
+    <button class="add-note-btn color-btn" style="background-color: #FFD700;" onclick="createNewNote('#FFD700')">Y</button>
+    <button class="add-note-btn color-btn" style="background-color: #4CAF50;" onclick="createNewNote('#4CAF50')">G</button>
+    <button id="toggleConnectModeBtn" class="control-btn" style="position: fixed; bottom: 30px; right: 310px; z-index: 1000;">Connect Notes</button>
 </div>
 
 @section Styles {
@@ -225,9 +230,58 @@
             transform: scale(1.1);
         }
 
+        .color-btn {
+            /* Adjust positioning if they overlap or look odd */
+            /* Example: move them up slightly from the default '+' button position */
+            bottom: 100px; /* Default '+' is at 30px, so this is 70px above */
+        }
+        /* Position the color buttons relative to the main '+' button */
+        .color-btn:nth-of-type(2) { /* Red */
+            right: 100px; /* Further to the left */
+            bottom: 30px;
+        }
+        .color-btn:nth-of-type(3) { /* Yellow */
+            right: 170px;
+            bottom: 30px;
+        }
+        .color-btn:nth-of-type(4) { /* Green */
+            right: 240px;
+            bottom: 30px;
+        }
+
         .note.dragging {
             z-index: 1000;
             opacity: 0.8;
+        }
+
+        /* Styles for connection lines */
+        .connection-line {
+            stroke: #555;
+            stroke-width: 2px;
+            pointer-events: auto; /* Allow clicks on lines for deletion */
+            cursor: pointer;
+        }
+
+        .connection-line:hover {
+            stroke: #ff0000; /* Highlight on hover */
+        }
+
+        .note.selected-for-connection {
+            border: 2px dashed #007bff;
+            box-shadow: 0 0 10px rgba(0,123,255,0.5);
+        }
+
+        .control-btn {
+            padding: 10px 15px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .control-btn:hover {
+            background-color: #5a6268;
         }
     </style>
 }
@@ -238,6 +292,12 @@
         let connection;
         let notes = new Map();
         let isDragging = false;
+
+        // Variables for note connections
+        let noteConnections = new Map(); // Stores connection objects by their ID
+        let isConnectMode = false;
+        let firstNoteSelectedForConnection = null;
+        let connectionsCanvas; // Will hold the SVG element
 
         async function initializeSignalR() {
             connection = new signalR.HubConnectionBuilder()
@@ -261,6 +321,24 @@
                 moveNoteInUI(noteId, x, y);
             });
 
+            // Handler for receiving a new connection
+            connection.on("ReceiveNoteConnection", (connectionData) => {
+                console.log("ReceiveNoteConnection", connectionData);
+                if (!noteConnections.has(connectionData.id)) {
+                    noteConnections.set(connectionData.id, connectionData);
+                    drawConnection(connectionData);
+                }
+            });
+
+            // Handler for removing a connection
+            connection.on("RemoveNoteConnection", (connectionId) => {
+                console.log("RemoveNoteConnection", connectionId);
+                if (noteConnections.has(connectionId)) {
+                    noteConnections.delete(connectionId);
+                    removeConnectionLine(connectionId);
+                }
+            });
+
             try {
                 await connection.start();
                 console.log("SignalR Connected!");
@@ -269,9 +347,13 @@
             }
         }
 
-        document.addEventListener('DOMContentLoaded', initializeSignalR);
+        document.addEventListener('DOMContentLoaded', () => {
+            connectionsCanvas = document.getElementById('connectionsCanvas');
+            initializeSignalR();
+            setupConnectModeButton();
+        });
 
-        function createNewNote() {
+        function createNewNote(colorHex) {
             if (!connection) {
                 console.error("SignalR connection not initialized");
                 return;
@@ -279,7 +361,7 @@
             const note = {
                 title: "New Note",
                 content: "",
-                color: "#ffd700",
+                color: colorHex || "#ffd700", // Use provided color or default to yellow
                 positionX: Math.random() * (window.innerWidth - 300),
                 positionY: Math.random() * (window.innerHeight - 300)
             };
@@ -293,6 +375,10 @@
             noteElement.style.left = note.positionX + "px";
             noteElement.style.top = note.positionY + "px";
             noteElement.style.backgroundColor = note.color;
+
+            // Add click listener for connection mode
+            noteElement.addEventListener('click', () => handleNoteClickForConnection(note.id));
+
             noteElement.innerHTML = `
                 <div class="note-actions">
                     <button class="close-btn" onclick="deleteNote(${note.id})">×</button>
@@ -323,6 +409,8 @@
             if (noteElement) {
                 noteElement.remove();
                 notes.delete(noteId);
+                // Connections are removed via SignalR message "RemoveNoteConnection"
+                // which will trigger removeConnectionLine if the note deletion caused cascade delete in DB.
             }
         }
 
@@ -331,13 +419,14 @@
             if (noteElement) {
                 noteElement.style.left = x + "px";
                 noteElement.style.top = y + "px";
-                noteElement.style.transform = "none";
+                noteElement.style.transform = "none"; // Reset transform if it was applied during drag initiation
                 
                 const note = notes.get(noteId);
                 if (note) {
                     note.positionX = x;
                     note.positionY = y;
                 }
+                updateConnectionLinesForNote(noteId); // Update lines when a note moves
             }
         }
 
@@ -391,6 +480,12 @@
 
                     element.style.left = startX + "px";
                     element.style.top = startY + "px";
+
+                    // Update connection lines in real-time during drag
+                    const noteId = parseInt(element.id);
+                    if (!isNaN(noteId)) {
+                        updateConnectionLinesForNote(noteId);
+                    }
                 }
             }
 
@@ -403,6 +498,242 @@
                     const noteId = parseInt(element.id);
                     connection.invoke("MoveNote", noteId, startX, startY);
                 }
+            }
+        }
+
+        // --- Note Connection Drawing Functions ---
+
+        function drawConnection(connectionData) {
+            if (!connectionsCanvas) return;
+
+            const sourceNoteEl = document.getElementById(connectionData.sourceNoteId);
+            const targetNoteEl = document.getElementById(connectionData.targetNoteId);
+
+            if (!sourceNoteEl || !targetNoteEl) {
+                console.warn("Cannot draw connection, source or target note element not found:", connectionData);
+                return;
+            }
+
+            const lineId = `line-${connectionData.id}`;
+            let line = document.getElementById(lineId);
+            if (!line) {
+                line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("id", lineId);
+                line.setAttribute("class", "connection-line");
+                line.addEventListener('click', () => {
+                    if (confirm('Delete this connection?')) {
+                        console.log(`Attempting to disconnect connection ID: ${connectionData.id}`);
+                        connection.invoke("DisconnectNotes", connectionData.id);
+                    }
+                });
+                connectionsCanvas.appendChild(line);
+            }
+            
+            const containerRect = document.getElementById('noteContainer').getBoundingClientRect();
+
+            // Calculate center points first
+            const rectSourceInitial = sourceNoteEl.getBoundingClientRect();
+            const rectTargetInitial = targetNoteEl.getBoundingClientRect();
+
+            const sourceCenter = {
+                x: rectSourceInitial.left - containerRect.left + rectSourceInitial.width / 2,
+                y: rectSourceInitial.top - containerRect.top + rectSourceInitial.height / 2
+            };
+            const targetCenter = {
+                x: rectTargetInitial.left - containerRect.left + rectTargetInitial.width / 2,
+                y: rectTargetInitial.top - containerRect.top + rectTargetInitial.height / 2
+            };
+
+            // Get intersection points with note edges
+            const startPoint = getEdgeIntersectionPoint(sourceNoteEl, targetCenter, containerRect);
+            const endPoint = getEdgeIntersectionPoint(targetNoteEl, sourceCenter, containerRect);
+            
+            if (!startPoint || !endPoint) {
+                console.warn("Could not calculate intersection points for connection:", connectionData);
+                 // Fallback to center if calculation fails, or hide line
+                line.setAttribute("x1", sourceCenter.x);
+                line.setAttribute("y1", sourceCenter.y);
+                line.setAttribute("x2", targetCenter.x);
+                line.setAttribute("y2", targetCenter.y);
+                return;
+            }
+
+            line.setAttribute("x1", startPoint.x);
+            line.setAttribute("y1", startPoint.y);
+            line.setAttribute("x2", endPoint.x);
+            line.setAttribute("y2", endPoint.y);
+        }
+
+        function getEdgeIntersectionPoint(noteElement, otherNoteCenter, containerRect) {
+            const noteRect = noteElement.getBoundingClientRect();
+            
+            // Note's own center, relative to the container
+            const noteCenterX = noteRect.left - containerRect.left + noteRect.width / 2;
+            const noteCenterY = noteRect.top - containerRect.top + noteRect.height / 2;
+
+            // Relative coordinates of the note's bounding box edges
+            const noteLeft = noteRect.left - containerRect.left;
+            const noteRight = noteRect.right - containerRect.left;
+            const noteTop = noteRect.top - containerRect.top;
+            const noteBottom = noteRect.bottom - containerRect.top;
+
+            const dx = otherNoteCenter.x - noteCenterX;
+            const dy = otherNoteCenter.y - noteCenterY;
+
+            if (dx === 0 && dy === 0) return { x: noteCenterX, y: noteCenterY }; // Should not happen if notes are distinct
+
+            let t = Infinity;
+            let edgePoints = [];
+
+            // Check intersection with each of the 4 edges
+            // Top edge (y = noteTop)
+            if (dy !== 0) {
+                const tTop = (noteTop - noteCenterY) / dy;
+                if (tTop >= 0) {
+                     const intersectX = noteCenterX + tTop * dx;
+                    if (intersectX >= noteLeft && intersectX <= noteRight) {
+                        edgePoints.push({ x: intersectX, y: noteTop, t: tTop });
+                    }
+                }
+            }
+            // Bottom edge (y = noteBottom)
+            if (dy !== 0) {
+                const tBottom = (noteBottom - noteCenterY) / dy;
+                if (tBottom >= 0) {
+                    const intersectX = noteCenterX + tBottom * dx;
+                    if (intersectX >= noteLeft && intersectX <= noteRight) {
+                        edgePoints.push({ x: intersectX, y: noteBottom, t: tBottom });
+                    }
+                }
+            }
+            // Left edge (x = noteLeft)
+            if (dx !== 0) {
+                const tLeft = (noteLeft - noteCenterX) / dx;
+                if (tLeft >= 0) {
+                    const intersectY = noteCenterY + tLeft * dy;
+                    if (intersectY >= noteTop && intersectY <= noteBottom) {
+                        edgePoints.push({ x: noteLeft, y: intersectY, t: tLeft });
+                    }
+                }
+            }
+            // Right edge (x = noteRight)
+            if (dx !== 0) {
+                const tRight = (noteRight - noteCenterX) / dx;
+                if (tRight >= 0) {
+                    const intersectY = noteCenterY + tRight * dy;
+                    if (intersectY >= noteTop && intersectY <= noteBottom) {
+                        edgePoints.push({ x: noteRight, y: intersectY, t: tRight });
+                    }
+                }
+            }
+            
+            // Filter for intersections that are "towards" the other note (0 < t <= 1 range approx for segment)
+            // More robustly, pick the point with the smallest positive 't'
+            // For a line originating from inside the rectangle, we are looking for the smallest positive t.
+            edgePoints = edgePoints.filter(p => p.t > 1e-6); // Filter out points at or very near the center, use small epsilon
+
+            if (edgePoints.length === 0) {
+                 // This might happen if the other note's center is inside this note, or math error.
+                 // Fallback to center of current note, or handle as error.
+                 // console.warn("No valid intersection point found for note:", noteElement.id, "to point:", otherNoteCenter);
+                 return { x: noteCenterX, y: noteCenterY }; // Fallback to center
+            }
+
+            // Sort by t to find the closest intersection point on the path towards the other note
+            edgePoints.sort((a, b) => a.t - b.t);
+            
+            return { x: edgePoints[0].x, y: edgePoints[0].y };
+        }
+
+        function removeConnectionLine(connectionId) {
+            if (!connectionsCanvas) return;
+            const line = document.getElementById(`line-${connectionId}`);
+            if (line) {
+                connectionsCanvas.removeChild(line);
+            }
+        }
+
+        function updateConnectionLinesForNote(noteId) {
+            if (!connectionsCanvas) return;
+            noteConnections.forEach(conn => {
+                if (conn.sourceNoteId == noteId || conn.targetNoteId == noteId) {
+                    drawConnection(conn); // Re-draw/update the specific connection
+                }
+            });
+        }
+        
+        function redrawAllConnections() {
+            if (!connectionsCanvas) return;
+            // Clear existing lines (simple way, could be optimized)
+            // while (connectionsCanvas.firstChild) {
+            //     connectionsCanvas.removeChild(connectionsCanvas.firstChild);
+            // }
+            // Re-draw all
+            noteConnections.forEach(conn => {
+                drawConnection(conn);
+            });
+        }
+        // Call redrawAllConnections on window resize or other layout changes if necessary
+        // window.addEventListener('resize', redrawAllConnections);
+
+        // --- Connect Mode UI Functions ---
+        function setupConnectModeButton() {
+            const connectModeBtn = document.getElementById('toggleConnectModeBtn');
+            if (connectModeBtn) {
+                connectModeBtn.addEventListener('click', () => {
+                    isConnectMode = !isConnectMode;
+                    if (isConnectMode) {
+                        connectModeBtn.textContent = 'Cancel Connecting';
+                        connectModeBtn.style.backgroundColor = '#dc3545'; // Red color for cancel
+                        // Optionally, indicate connect mode visually (e.g., change cursor)
+                        document.body.style.cursor = 'crosshair'; 
+                    } else {
+                        connectModeBtn.textContent = 'Connect Notes';
+                        connectModeBtn.style.backgroundColor = '#6c757d'; // Default color
+                        if (firstNoteSelectedForConnection) {
+                            document.getElementById(firstNoteSelectedForConnection)?.classList.remove('selected-for-connection');
+                        }
+                        firstNoteSelectedForConnection = null;
+                        document.body.style.cursor = 'default';
+                    }
+                });
+            }
+        }
+
+        function handleNoteClickForConnection(noteId) {
+            if (!isConnectMode) return;
+
+            const noteElement = document.getElementById(noteId);
+            if (!noteElement) return;
+
+            if (!firstNoteSelectedForConnection) {
+                // This is the first note selected
+                firstNoteSelectedForConnection = noteId;
+                noteElement.classList.add('selected-for-connection');
+                console.log(`First note selected for connection: ${noteId}`);
+            } else {
+                // This is the second note selected
+                if (firstNoteSelectedForConnection == noteId) {
+                    // Clicked the same note again - deselect it or do nothing
+                    console.log('Clicked the same note again. Deselecting.');
+                    noteElement.classList.remove('selected-for-connection');
+                    firstNoteSelectedForConnection = null;
+                    return;
+                }
+
+                console.log(`Second note selected: ${noteId}. Creating connection between ${firstNoteSelectedForConnection} and ${noteId}`);
+                connection.invoke("ConnectNotes", firstNoteSelectedForConnection, noteId);
+                
+                // Reset connect mode after attempting to connect
+                document.getElementById(firstNoteSelectedForConnection)?.classList.remove('selected-for-connection');
+                isConnectMode = false;
+                firstNoteSelectedForConnection = null;
+                const connectModeBtn = document.getElementById('toggleConnectModeBtn');
+                if (connectModeBtn) {
+                    connectModeBtn.textContent = 'Connect Notes';
+                    connectModeBtn.style.backgroundColor = '#6c757d';
+                }
+                document.body.style.cursor = 'default';
             }
         }
     </script>
