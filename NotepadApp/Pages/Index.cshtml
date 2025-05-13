@@ -129,6 +129,18 @@
             z-index: 1;
         }
 
+        .note.red {
+            background: #ffcccb;
+        }
+
+        .note.green {
+            background: #90ee90;
+        }
+
+        .note.yellow {
+            background: #ffd700;
+        }
+
         .note:hover {
             transform: scale(1.02);
             z-index: 1000;
@@ -140,7 +152,26 @@
             margin-bottom: 10px;
             border-bottom: 1px solid rgba(0,0,0,0.1);
             padding-bottom: 5px;
+            position: relative;
         }
+
+        .color-picker {
+            display: flex;
+            gap: 5px;
+            margin-right: 10px;
+        }
+
+        .color-dot {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        .color-dot.red { background-color: red; }
+        .color-dot.yellow { background-color: yellow; }
+        .color-dot.green { background-color: green; }
 
         .drag-handle {
             cursor: move;
@@ -287,34 +318,69 @@
         }
 
         function addNoteToUI(note) {
-            const noteElement = document.createElement("div");
-            noteElement.className = "note";
-            noteElement.id = note.id;
-            noteElement.style.left = note.positionX + "px";
-            noteElement.style.top = note.positionY + "px";
-            noteElement.style.backgroundColor = note.color;
-            noteElement.innerHTML = `
+            let noteDiv = document.getElementById('note-' + note.id);
+            if (noteDiv) {
+                updateNoteInUI(note);
+                return;
+            }
+
+            noteDiv = document.createElement('div');
+            noteDiv.id = 'note-' + note.id;
+            noteDiv.className = 'note';
+            noteDiv.style.left = note.positionX + 'px';
+            noteDiv.style.top = note.positionY + 'px';
+            if (note.color) {
+                noteDiv.classList.add(note.color.toLowerCase());
+            }
+
+            const header = document.createElement('div');
+            header.className = 'note-header';
+
+            const dragHandle = document.createElement('span');
+            dragHandle.className = 'drag-handle';
+            dragHandle.innerHTML = '&#9776;';
+            header.appendChild(dragHandle);
+
+            const colorPicker = document.createElement('div');
+            colorPicker.className = 'color-picker';
+            ['red', 'yellow', 'green'].forEach(color => {
+                const dot = document.createElement('span');
+                dot.className = 'color-dot ' + color;
+                dot.dataset.color = color;
+                colorPicker.appendChild(dot);
+            });
+            header.appendChild(colorPicker);
+
+            const title = document.createElement('div');
+            title.className = 'note-title';
+            title.textContent = note.title;
+            title.contentEditable = true;
+            title.onblur = function() {
+                updateNoteTitle(note.id, this.textContent);
+            };
+            header.appendChild(title);
+
+            noteDiv.innerHTML = `
                 <div class="note-actions">
                     <button class="close-btn" onclick="deleteNote(${note.id})">×</button>
                 </div>
-                <div class="note-header">
-                    <div class="drag-handle">⋮⋮</div>
-                    <div class="note-title" contenteditable="true" onblur="updateNoteTitle(${note.id}, this.textContent)">${note.title}</div>
-                </div>
+                ${header.outerHTML}
                 <div class="note-content" contenteditable="true" onblur="updateNoteContent(${note.id}, this.textContent)">${note.content}</div>
             `;
-            makeDraggable(noteElement);
-            document.getElementById("noteContainer").appendChild(noteElement);
+            makeDraggable(noteDiv);
+            document.getElementById("noteContainer").appendChild(noteDiv);
             notes.set(note.id, note);
         }
 
         function updateNoteInUI(note) {
-            const noteElement = document.getElementById(note.id);
-            if (noteElement) {
-                noteElement.querySelector(".note-title").textContent = note.title;
-                noteElement.querySelector(".note-content").textContent = note.content;
-                noteElement.style.backgroundColor = note.color;
-                notes.set(note.id, note);
+            const noteDiv = document.getElementById('note-' + note.id);
+            if (noteDiv) {
+                noteDiv.querySelector('.note-title').textContent = note.title;
+                noteDiv.querySelector('.note-content').textContent = note.content;
+                noteDiv.className = 'note';
+                if (note.color) {
+                    noteDiv.classList.add(note.color.toLowerCase());
+                }
             }
         }
 

@@ -3,7 +3,7 @@
 Allow users to change the color of a note (between red, yellow, and green) by clicking an interface element within the note's header.
 
 ## Proposed Tasks
-- [ ] **Task 1: Design Color Picker UI in Note Header**
+- [x] **Task 1: Design Color Picker UI in Note Header**
     -   Determine the visual representation of the color options (e.g., small colored circles, dropdown).
     -   Modify the `addNoteToUI` JavaScript function in `NotepadApp/Pages/Index.cshtml` to include these UI elements in newly created and existing notes.
     -   Ensure the UI elements are styled appropriately and are clearly part of the note header.

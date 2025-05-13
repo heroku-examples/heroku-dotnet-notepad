@@ -132,6 +132,7 @@
             *   `makeDraggable`: Adds drag-and-drop behavior to note elements, calling `connection.invoke("MoveNote", ...)` on drag end.
             *   `updateNoteContent`: Called on blur/change of editable fields or color change, calls `connection.invoke("UpdateNote", ...)`.
             *   `deleteNote`: Calls `connection.invoke("DeleteNote", noteId)`.
+            *   The `addNoteToUI` function now includes a color picker UI (red, yellow, green dots) in the note header, allowing visual selection of note color. CSS classes are used to apply the background color to notes.
 *   **Configuration:** Uses the shared layout (`_Layout.cshtml`). Data is primarily managed via client-side JavaScript and SignalR.
 *   **Dependencies:** `NotepadApp.Models` (for `Note` type, though interaction is client-side), SignalR client.
 ---
